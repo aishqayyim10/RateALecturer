@@ -1,0 +1,78 @@
+{% extends 'forum/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-8 col-lg-6">
+        
+        <div class="card shadow-sm border-0 border-top border-5 mb-5" style="border-color: #003366 !important;">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    {% if profile and profile.profile_picture and profile.profile_picture.url != '/images/avatars/default.jpg' %}
+                        <img src="{{ profile.profile_picture.url }}" class="rounded-circle shadow-sm mb-3" style="width: 150px; height: 150px; object-fit: cover; border: 4px solid #003366;">
+                    {% else %}
+                        <i class="bi bi-person-circle text-darkblue" style="font-size: 6rem;"></i>
+                    {% endif %}
+                    
+                    <h2 class="fw-bold text-darkblue mt-2">{{ profile_user.username }}</h2>
+                    
+                    {% if profile %}
+                        <span class="badge bg-darkblue fs-6 shadow-sm me-1">Year {{ profile.year }}</span>
+                        <span class="badge bg-secondary fs-6 shadow-sm">Semester {{ profile.semester }}</span>
+                    {% endif %}
+                </div>
+
+                {% if profile and profile.bio %}
+                    <div class="bg-light p-3 rounded mb-2 text-center fst-italic text-secondary border">
+                        "{{ profile.bio }}"
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <h3 class="fw-bold text-darkblue mb-4 border-bottom pb-2">
+            <i class="bi bi-star-fill text-warning me-2"></i>{{ profile_user.username }}'s Reviews
+        </h3>
+        
+        {% for review in reviews %}
+            <div class="card shadow-sm border-0 mb-4 border-start border-4" style="border-color: #003366 !important;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                        <h5 class="fw-bold mb-0">
+                            <a href="{% url 'lecturer_detail' review.lecturer.id %}" class="text-decoration-none text-darkblue hover-link">
+                                {{ review.lecturer.name }}
+                            </a>
+                        </h5>
+                        <small class="text-muted fw-bold">
+                            <i class="bi bi-calendar3 me-1"></i> {{ review.created_at|date:"M d, Y" }}
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <span class="badge bg-darkblue fs-6 me-2 shadow-sm">Overall: {{ review.overall_rating }}/5</span>
+                        <strong class="text-muted me-2 small">Difficulty:</strong>
+                        <span class="text-warning fs-6">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= review.difficulty %}
+                                    <i class="bi bi-star-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                    </div>
+
+                    <p class="card-text fst-italic fs-6">"{{ review.comment }}"</p>
+                </div>
+            </div>
+        {% empty %}
+            <div class="alert alert-light text-center border shadow-sm p-4">
+                <p class="text-muted mb-0 fw-bold">{{ profile_user.username }} hasn't written any reviews yet.</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .hover-link:hover { text-decoration: underline !important; }
+</style>
+{% endblock %}

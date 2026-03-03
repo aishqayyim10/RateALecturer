@@ -1,0 +1,58 @@
+{% extends 'forum/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-8 col-lg-7">
+        
+        <a href="{% url 'lecturer_detail' lecturer.id %}" class="text-decoration-none text-darkblue mb-3 d-inline-block fw-bold">
+            &larr; Back to {{ lecturer.name }}
+        </a>
+        
+        <div class="card shadow-sm border-0 border-top border-5" style="border-color: #003366 !important;">
+            <div class="card-body p-4 p-md-5">
+                <h3 class="fw-bold text-darkblue mb-4">
+                    <i class="bi bi-pencil-square me-2"></i>Edit Your Review
+                </h3>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-darkblue">Overall Rating (1-5)</label>
+                            {{ form.overall_rating }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold text-darkblue">Difficulty (1-5)</label>
+                            {{ form.difficulty }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        {{ form.would_take_again }}
+                        <label class="form-check-label fw-bold text-darkblue ms-1" for="{{ form.would_take_again.id_for_label }}" style="cursor: pointer;">
+                            I would take this lecturer again
+                        </label>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-darkblue">Your Comment</label>
+                        {{ form.comment }}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-darkblue fw-bold shadow-sm px-4">
+                            Save Changes
+                        </button>
+                        <a href="{% url 'lecturer_detail' lecturer.id %}" class="btn btn-outline-secondary fw-bold px-4 shadow-sm">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+                
+            </div>
+        </div>
+        
+    </div>
+</div>
+{% endblock %}

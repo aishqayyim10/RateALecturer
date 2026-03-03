@@ -1,0 +1,61 @@
+{% extends 'forum/base.html' %}
+
+{% block content %}
+<style>
+    /* Force Django's default inputs to match Bootstrap styling */
+    input[type="text"], input[type="password"], input[type="email"] {
+        width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 5px; margin-top: 5px; margin-bottom: 10px;
+    }
+    label { font-weight: bold; color: #003366; }
+    /* Style the password requirements text */
+    .helptext { font-size: 0.85em; color: #6c757d; display: block; margin-bottom: 15px; }
+    /* Style form errors */
+    ul.errorlist { color: #dc3545; list-style-type: none; padding-left: 0; font-size: 0.9em; font-weight: bold; }
+</style>
+
+<div class="row justify-content-center mt-5 mb-5">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm border-0 border-top border-5" style="border-color: #003366 !important;">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <i class="bi bi-person-circle text-darkblue" style="font-size: 3rem;"></i>
+                    <h2 class="fw-bold text-darkblue mt-2">Create an Account</h2>
+                </div>
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <h5 class="fw-bold text-darkblue mb-3 border-bottom pb-2">Account Details</h5>
+                    {{ user_form.as_p }}
+                    
+                    <h5 class="fw-bold text-darkblue mt-4 mb-3 border-bottom pb-2">Student Profile</h5>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-darkblue">Profile Picture</label>
+                        {{ profile_form.profile_picture }}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-darkblue">Year</label>
+                            {{ profile_form.year }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-darkblue">Semester</label>
+                            {{ profile_form.semester }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-darkblue">Bio</label>
+                        {{ profile_form.bio }}
+                    </div>
+
+                    <button type="submit" class="btn btn-darkblue w-100 fw-bold shadow-sm py-2 mt-2">Create Account</button>
+                </form>
+                <div class="text-center mt-4">
+                    <p class="text-muted">Already have an account? <a href="{% url 'login' %}" class="text-darkblue fw-bold text-decoration-none">Log in here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

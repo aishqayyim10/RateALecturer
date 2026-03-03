@@ -1,3 +1,4 @@
+import os
 """
 Django settings for config project.
 
@@ -116,3 +117,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Redirect to the home page after logging in
+LOGIN_REDIRECT_URL = 'home'
+
+# Redirect to the home page after logging out (as a fallback)
+LOGOUT_REDIRECT_URL = 'home'
+
+# URL that handles the media served from MEDIA_ROOT
+MEDIA_URL = '/images/'
+
+# Path where the images will be stored on your computer
+MEDIA_ROOT = os.path.join(BASE_DIR, 'static/images')
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

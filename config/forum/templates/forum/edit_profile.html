@@ -1,0 +1,44 @@
+{% extends 'forum/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center mt-4 mb-5">
+    <div class="col-md-8 col-lg-6">
+        <a href="{% url 'profile' %}" class="text-decoration-none text-darkblue mb-3 d-inline-block fw-bold">
+            &larr; Back to Profile
+        </a>
+        <div class="card shadow-sm border-0 border-top border-5" style="border-color: #003366 !important;">
+            <div class="card-body p-4 p-md-5">
+                <h2 class="fw-bold text-darkblue mb-4"><i class="bi bi-gear-fill me-2"></i>Edit Profile</h2>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-darkblue">Update Profile Picture</label>
+                        {{ form.profile_picture }}
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-darkblue">Year</label>
+                            {{ form.year }}
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold text-darkblue">Semester</label>
+                            {{ form.semester }}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-darkblue">Bio</label>
+                        {{ form.bio }}
+                    </div>
+
+                    <button type="submit" class="btn btn-darkblue fw-bold w-100 shadow-sm py-2">
+                        Save Changes
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
