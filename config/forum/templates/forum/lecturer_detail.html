@@ -28,6 +28,7 @@
             {% if user.is_authenticated %}
                 <form method="POST">
                     {% csrf_token %}
+                    <form id="review-form" method="POST"> {% csrf_token %}
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold text-darkblue">Overall Rating (1-5)</label>
@@ -74,7 +75,7 @@
 
     <h3 class="fw-bold mb-4 border-bottom pb-2 text-darkblue">Student Reviews</h3>
     
-    {% for review in reviews %}
+    <div id="all-reviews-container">{% for review in reviews %}
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-body p-4">
                 
@@ -144,18 +145,15 @@
 
                 <div class="d-flex justify-content-between align-items-center mt-4">
                     <div class="d-flex gap-2">
-                        <form action="{% url 'upvote_review' review.id %}" method="POST">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-success fw-bold">
-                                ▲ Upvote ({{ review.upvotes.count }})
-                            </button>
-                        </form>
-                        <form action="{% url 'downvote_review' review.id %}" method="POST">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-sm btn-outline-danger fw-bold">
-                                ▼ Downvote ({{ review.downvotes.count }})
-                            </button>
-                        </form>
+                        <button type="button" class="btn btn-sm btn-outline-success fw-bold vote-btn upvote-btn-{{ review.id }}" 
+                                data-url="{% url 'upvote_review' review.id %}" data-review-id="{{ review.id }}">
+                            ▲ Upvote (<span class="upvote-count">{{ review.upvotes.count }}</span>)
+                        </button>
+                        
+                        <button type="button" class="btn btn-sm btn-outline-danger fw-bold vote-btn downvote-btn-{{ review.id }}" 
+                                data-url="{% url 'downvote_review' review.id %}" data-review-id="{{ review.id }}">
+                            ▼ Downvote (<span class="downvote-count">{{ review.downvotes.count }}</span>)
+                        </button>
                     </div>
 
                     {% if request.user == review.user %}
@@ -208,7 +206,7 @@
 
 
                 {% if user.is_authenticated %}
-                    <form method="POST" action="{% url 'add_comment' review.id %}" class="mt-3">
+                    <form method="POST" action="{% url 'add_comment' review.id %}" class="comment-form mt-3"> {% csrf_token %}
                         {% csrf_token %}
                         <div class="mb-2">
                             {{ comment_form.body }}
@@ -233,8 +231,137 @@
             <i class="bi bi-info-circle-fill me-2"></i> No reviews yet. Be the first to review this lecturer!
         </div>
     {% endfor %}
+    </div>
 
 <style>
     .hover-link:hover { text-decoration: underline !important; }
 </style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // 1. Function to handle Upvotes and Downvotes
+        function attachVoteListeners() {
+            const voteButtons = document.querySelectorAll('.vote-btn');
+            voteButtons.forEach(button => {
+                // Clone the button to remove old event listeners before re-attaching
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                
+                newButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const url = this.dataset.url;
+                    const reviewId = this.dataset.reviewId;
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}',
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => {
+                        if (response.status === 403) {
+                            alert("You must be logged in to vote.");
+                            window.location.href = "{% url 'login' %}";
+                            return;
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data && data.total_upvotes !== undefined) {
+                            const upvoteBtn = document.querySelector(`.upvote-btn-${reviewId}`);
+                            const downvoteBtn = document.querySelector(`.downvote-btn-${reviewId}`);
+                            upvoteBtn.querySelector('.upvote-count').textContent = data.total_upvotes;
+                            downvoteBtn.querySelector('.downvote-count').textContent = data.total_downvotes;
+                        }
+                    })
+                    .catch(error => console.error('Error handling vote:', error));
+                });
+            });
+        }
+
+        // 2. Function to handle Comment/Reply submissions
+        function attachCommentListeners() {
+            const commentForms = document.querySelectorAll('.comment-form');
+            commentForms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    const originalText = submitBtn.innerHTML;
+                    submitBtn.innerHTML = "Posting...";
+                    submitBtn.disabled = true;
+
+                    // Send the data in the background
+                    fetch(this.action, {
+                        method: 'POST',
+                        body: new FormData(this) // FormData automatically handles the CSRF token!
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        // Parse the HTML returned by Django
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // Grab the updated reviews section and inject it into the current page
+                        document.getElementById('all-reviews-container').innerHTML = doc.getElementById('all-reviews-container').innerHTML;
+                        
+                        // Re-attach listeners because the HTML elements were just replaced
+                        attachVoteListeners();
+                        attachCommentListeners();
+                    })
+                    .catch(error => {
+                        console.error('Error posting comment:', error);
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                    });
+                });
+            });
+        }
+
+        // 3. Handle Main Review Form Submission
+        const reviewForm = document.getElementById('review-form');
+        if (reviewForm) {
+            reviewForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = "Submitting Review...";
+                submitBtn.disabled = true;
+
+                fetch(window.location.href, {
+                    method: 'POST',
+                    body: new FormData(this)
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    
+                    document.getElementById('all-reviews-container').innerHTML = doc.getElementById('all-reviews-container').innerHTML;
+                    
+                    // Clear the form fields after successful submission
+                    reviewForm.reset();
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    
+                    // Re-attach all listeners
+                    attachVoteListeners();
+                    attachCommentListeners();
+                })
+                .catch(error => {
+                    console.error('Error submitting review:', error);
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                });
+            });
+        }
+
+        // Initialize everything when the page first loads
+        attachVoteListeners();
+        attachCommentListeners();
+    });
+</script>
 {% endblock %}

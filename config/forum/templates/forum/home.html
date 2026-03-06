@@ -15,14 +15,35 @@
 
     <div class="card shadow-sm border-0 mb-5">
         <div class="card-body">
-            <form method="GET" action="{% url 'home' %}" class="d-flex gap-2">
-                <input type="text" name="q" class="form-control" placeholder="Search by name..." value="{{ query|default_if_none:'' }}">
-                <button type="submit" class="btn btn-darkblue px-4 fw-bold">Search</button>
+            <form method="GET" action="{% url 'home' %}" class="row g-2 align-items-center">
+                
+                <div class="col-md-6">
+                    <input type="text" name="q" class="form-control" placeholder="Search by lecturer name..." value="{{ query|default_if_none:'' }}">
+                </div>
+                
+                <div class="col-md-4">
+                    <select name="faculty" class="form-select">
+                        <option value="">All Faculties</option>
+                        {% for faculty in faculties %}
+                            <option value="{{ faculty.id }}" {% if selected_faculty == faculty.id|stringformat:"s" %}selected{% endif %}>
+                                {{ faculty.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-darkblue w-100 fw-bold">Filter</button>
+                </div>
+                
             </form>
-            {% if query %}
-                <div class="mt-2">
-                    <small class="text-muted">Showing results for: <strong>"{{ query }}"</strong></small>
-                    <a href="{% url 'home' %}" class="text-darkblue ms-2 text-decoration-none small"><i class="bi bi-x-circle"></i> Clear</a>
+            
+            {% if query or selected_faculty %}
+                <div class="mt-3">
+                    <small class="text-muted">Filtering active.</small>
+                    <a href="{% url 'home' %}" class="text-darkblue ms-2 text-decoration-none small">
+                        <i class="bi bi-x-circle"></i> Clear Filters
+                    </a>
                 </div>
             {% endif %}
         </div>

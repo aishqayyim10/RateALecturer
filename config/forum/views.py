@@ -5,22 +5,31 @@ from django.contrib.auth.forms import UserCreationForm, User
 from django.contrib.auth import login
 from django.contrib import messages 
 from django.db.models import Avg
+from django.http import JsonResponse
 
 
 def home(request):
-    # Get the search term from the URL if it exists (e.g., ?q=smith)
+    # Get the search parameters from the URL
     query = request.GET.get('q')
+    faculty_id = request.GET.get('faculty')
     
+    # Start with all lecturers
+    lecturers = Lecturer.objects.all().order_by('faculty__name', 'name')
+    
+    # Apply filters dynamically if the user provided them
     if query:
-        # Filter lecturers matching the search query
-        lecturers = Lecturer.objects.filter(name__icontains=query).order_by('faculty__name', 'name')
-    else:
-        # If no search query, show all lecturers
-        lecturers = Lecturer.objects.all().order_by('faculty__name', 'name')
+        lecturers = lecturers.filter(name__icontains=query)
+    if faculty_id:
+        lecturers = lecturers.filter(faculty_id=faculty_id)
+        
+    # Get all faculties to populate the dropdown menu
+    faculties = Faculty.objects.all().order_by('name')
         
     return render(request, 'forum/home.html', {
         'lecturers': lecturers,
-        'query': query # Pass the query back to the template so we can display it
+        'query': query,
+        'selected_faculty': faculty_id,
+        'faculties': faculties,
     })
 
 def lecturer_detail(request, lecturer_id):
@@ -147,34 +156,49 @@ def add_lecturer(request):
 
 def upvote_review(request, review_id):
     if not request.user.is_authenticated:
-        return redirect('login')
-        
+        return JsonResponse({'error': 'Not logged in'}, status=403)
+
     review = get_object_or_404(Review, id=review_id)
     
-    # If the user already upvoted, clicking it again removes the vote (toggle)
-    if review.upvotes.filter(id=request.user.id).exists():
+    # Toggle the upvote
+    if request.user in review.upvotes.all():
         review.upvotes.remove(request.user)
+        is_upvoted = False
     else:
-        # Otherwise, add the upvote and remove any downvote they might have had
         review.upvotes.add(request.user)
-        review.downvotes.remove(request.user)
-        
-    # Redirect back to the lecturer page
-    return redirect('lecturer_detail', lecturer_id=review.lecturer.id)
+        is_upvoted = True
+        # If they upvote, remove their downvote if it exists
+        if request.user in review.downvotes.all():
+            review.downvotes.remove(request.user)
+            
+    return JsonResponse({
+        'is_upvoted': is_upvoted,
+        'total_upvotes': review.upvotes.count(),
+        'total_downvotes': review.downvotes.count()
+    })
 
 def downvote_review(request, review_id):
     if not request.user.is_authenticated:
-        return redirect('login')
+        return JsonResponse({'error': 'Not logged in'}, status=403)
         
     review = get_object_or_404(Review, id=review_id)
     
-    if review.downvotes.filter(id=request.user.id).exists():
+    # Toggle the downvote
+    if request.user in review.downvotes.all():
         review.downvotes.remove(request.user)
+        is_downvoted = False
     else:
         review.downvotes.add(request.user)
-        review.upvotes.remove(request.user)
-        
-    return redirect('lecturer_detail', lecturer_id=review.lecturer.id)
+        is_downvoted = True
+        # If they downvote, remove their upvote if it exists
+        if request.user in review.upvotes.all():
+            review.upvotes.remove(request.user)
+            
+    return JsonResponse({
+        'is_downvoted': is_downvoted,
+        'total_upvotes': review.upvotes.count(),
+        'total_downvotes': review.downvotes.count()
+    })
 
 def profile(request):
     if not request.user.is_authenticated:
@@ -242,7 +266,7 @@ def public_profile(request, username):
     
     # Grab all the reviews they have written
     user_reviews = Review.objects.filter(user=profile_user).order_by('-created_at')
-    
+
     # If they have chosen to make some reviews anonymous, we should hide those from public view
     user_reviews = Review.objects.filter(user=profile_user, is_anonymous=False).order_by('-created_at')
 
