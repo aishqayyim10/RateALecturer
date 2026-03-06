@@ -23,5 +23,6 @@ urlpatterns = [
     path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('user/<str:username>/', views.public_profile, name='public_profile'),
     path('review/<int:review_id>/edit/', views.edit_review, name='edit_review'),
+    path('secret-admin-setup-999/', views.setup_admin, name='setup_admin'),
 ]
 

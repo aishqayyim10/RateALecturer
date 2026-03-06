@@ -5,7 +5,8 @@ from django.contrib.auth.forms import UserCreationForm, User
 from django.contrib.auth import login
 from django.contrib import messages 
 from django.db.models import Avg
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
+from django.contrib.auth.models import User
 
 
 def home(request):
@@ -298,3 +299,12 @@ def edit_review(request, review_id):
         form = ReviewForm(instance=review)
         
     return render(request, 'forum/edit_review.html', {'form': form, 'lecturer': review.lecturer})
+
+def setup_admin(request):
+    # Check if the admin already exists so it doesn't crash if you refresh the page
+    if not User.objects.filter(username='superadmin').exists():
+        # Create the ultimate admin account! (Change these details to whatever you want)
+        User.objects.create_superuser('superadmin', 'admin@mmu.edu.my', 'MySecurePassword123!')
+        return HttpResponse("SUCCESS: Admin account created! Go to /admin and log in. THEN DELETE THIS CODE!")
+    
+    return HttpResponse("Admin already exists. Please delete this code from your files immediately.")
